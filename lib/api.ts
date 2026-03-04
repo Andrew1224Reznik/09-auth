@@ -9,7 +9,7 @@ export interface NotesResponse {
   totalPages: number;
 }
 
-interface CreateNoteData {
+export interface CreateNoteData {
   title: string;
   content?: string;
   tag: NoteTag;
