@@ -11,7 +11,6 @@ export default function SidebarNotes() {
     "Shopping",
     "Todo",
   ];
-
   return (
     <div>
       <ul className={css.menuList}>
