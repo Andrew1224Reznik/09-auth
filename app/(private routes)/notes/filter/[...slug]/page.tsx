@@ -39,7 +39,6 @@ export async function generateMetadata({
     },
   };
 }
-
 export default async function Notes({ params }: NotesProps) {
   const queryClient = new QueryClient();
 
