@@ -1,83 +1,96 @@
 "use client";
+
+import css from "./NoteForm.module.css";
+
+import { useId } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { NoteTag } from "@/types/note";
-import { createNote, CreateNoteData } from "@/lib/api";
-import css from "./NoteForm.module.css";
-import { useNoteStore } from "@/lib/store/noteStore";
+
+import { createNote } from "@/lib/api/clientApi";
+import { type NewNote } from "@/types/note";
+import { useDraft } from "@/lib/store/noteStore";
+
+type noteTag = "Todo" | "Work" | "Personal" | "Meeting" | "Shopping";
 
 export default function NoteForm() {
-  const queryClient = useQueryClient();
-  const { draft, setDraft, clearDraft } = useNoteStore();
-
-  const handleChange = (
-    event: React.ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >
-  ) => {
-    setDraft({
-      ...draft,
-      [event.target.name]: event.target.value,
-    });
-  };
-
+  const id = useId();
   const router = useRouter();
+  const queryClient = useQueryClient();
+  const { note, setDraft, clearDraft } = useDraft();
 
-  const handleCancel = () => router.push("/notes/filter/all");
-
-  const { mutate } = useMutation({
-    mutationFn: createNote,
+  const createMutation = useMutation({
+    mutationFn: async (data: NewNote) => {
+      const res = await createNote(data);
+      return res;
+    },
     onSuccess: () => {
-      clearDraft();
-      router.push("/notes/filter/all");
       queryClient.invalidateQueries({ queryKey: ["notes"] });
+      clearDraft();
+      successForm();
     },
   });
 
-  const handleSubmit = (formData: FormData) => {
-    const formValues = Object.fromEntries(formData.entries());
+  function change(
+    ev: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
+  ) {
+    const data = { ...note, [ev.target.name]: ev.target.value };
+    setDraft(data);
+  }
 
-    const values: CreateNoteData = {
-      title: formValues.title as string,
-      content: formValues.content as string,
-      tag: formValues.tag as NoteTag,
+  function cancelForm() {
+    router.back();
+  }
+
+  function successForm() {
+    router.push("/notes/filter/all");
+  }
+
+  function handleSubmit(formDada: FormData) {
+    const newNote: NewNote = {
+      title: formDada.get("title") as string,
+      content: formDada.get("content") as string,
+      tag: formDada.get("tag") as noteTag,
     };
+    createMutation.mutate(newNote);
+  }
 
-    mutate(values);
-  };
   return (
     <form className={css.form} action={handleSubmit}>
       <div className={css.formGroup}>
-        <label htmlFor="title">Title</label>
+        <label htmlFor={`${id}-title`}>Title</label>
         <input
+          onChange={change}
           type="text"
-          id="title"
+          id={`${id}-title`}
           name="title"
           className={css.input}
-          defaultValue={draft?.title}
-          onChange={handleChange}
+          required
+          defaultValue={note.title}
         />
       </div>
 
       <div className={css.formGroup}>
-        <label htmlFor="content">Content</label>
+        <label htmlFor={`${id}-content`}>Content</label>
         <textarea
-          id="content"
+          onChange={change}
+          id={`${id}-content`}
           name="content"
           className={css.textarea}
-          defaultValue={draft?.content}
-          onChange={handleChange}
+          rows={8}
+          defaultValue={note.content}
         />
       </div>
 
       <div className={css.formGroup}>
-        <label htmlFor="tag">Category</label>
+        <label htmlFor={`${id}-tag`}>Tag</label>
         <select
-          id="tag"
+          onChange={change}
+          id={`${id}-tag`}
           name="tag"
           className={css.select}
-          defaultValue={draft?.tag}
-          onChange={handleChange}
+          defaultValue={note.tag}
         >
           <option value="Todo">Todo</option>
           <option value="Work">Work</option>
@@ -88,11 +101,7 @@ export default function NoteForm() {
       </div>
 
       <div className={css.actions}>
-        <button
-          type="button"
-          className={css.cancelButton}
-          onClick={handleCancel}
-        >
+        <button onClick={cancelForm} type="button" className={css.cancelButton}>
           Cancel
         </button>
         <button type="submit" className={css.submitButton}>

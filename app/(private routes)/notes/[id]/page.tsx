@@ -6,15 +6,15 @@ import {
 import { Metadata } from "next";
 
 import { fetchNoteById } from "@/lib/api/serverApi";
-import NotePreviewClient from "./NotePreview.client";
+import NoteDetailsClient from "./NoteDetails.client";
 
-interface NotePreviewProps {
+interface NoteProps {
   params: Promise<{ id: string }>;
 }
 
 export async function generateMetadata({
   params,
-}: NotePreviewProps): Promise<Metadata> {
+}: NoteProps): Promise<Metadata> {
   const { id } = await params;
   const note = await fetchNoteById(id);
 
@@ -24,7 +24,7 @@ export async function generateMetadata({
     openGraph: {
       title: `${note.title}`,
       description: `${note.content.slice(0, 10)}`,
-      url: "https://08-zustand-steel-nine.vercel.app/",
+      url: `https://08-zustand-eight-rho.vercel.app/notes/${id}`,
       images: [
         {
           url: "https://ac.goit.global/fullstack/react/notehub-og-meta.jpg",
@@ -37,9 +37,9 @@ export async function generateMetadata({
   };
 }
 
-export default async function NotePreview({ params }: NotePreviewProps) {
-  const queryClient = new QueryClient();
+export default async function NoteDetails({ params }: NoteProps) {
   const { id } = await params;
+  const queryClient = new QueryClient();
 
   await queryClient.prefetchQuery({
     queryKey: ["note", id],
@@ -48,7 +48,7 @@ export default async function NotePreview({ params }: NotePreviewProps) {
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <NotePreviewClient id={id} />
+      <NoteDetailsClient />
     </HydrationBoundary>
   );
 }
