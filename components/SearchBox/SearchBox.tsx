@@ -1,5 +1,4 @@
 import css from "./SearchBox.module.css";
-
 import { useEffect, useState } from "react";
 
 interface SearchBoxProps {
